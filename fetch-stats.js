@@ -9,10 +9,20 @@
 const fs = require('fs');
 const path = require('path');
 
-const FLAGG_PLAYER_ID = 20000908;
 const LEBRON_TOTAL = 40474;
 const FLAGG_BIRTH_YEAR = 2006;
-const API_BASE = 'https://api.balldontlie.io/v1';
+const API_BASE = 'https://api.balldontlie.io/nba/v1';
+
+async function apiFetch(path, apiKey) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    headers: { Authorization: apiKey },
+  });
+  if (!res.ok) {
+    console.error(`API ${path} responded ${res.status}: ${await res.text()}`);
+    process.exit(1);
+  }
+  return res.json();
+}
 
 async function fetchStats() {
   const apiKey = process.env.BALLDONTLIE_API_KEY;
@@ -21,17 +31,21 @@ async function fetchStats() {
     process.exit(1);
   }
 
-  const res = await fetch(
-    `${API_BASE}/season_averages?player_ids[]=${FLAGG_PLAYER_ID}`,
-    { headers: { Authorization: apiKey } }
-  );
-
-  if (!res.ok) {
-    console.error(`API responded ${res.status}: ${await res.text()}`);
+  // Look up Flagg's player ID by name
+  const players = await apiFetch('/players?search=Cooper+Flagg', apiKey);
+  if (!players.data || players.data.length === 0) {
+    console.error('Could not find Cooper Flagg in player database.');
     process.exit(1);
   }
+  const playerId = players.data[0].id;
+  console.log(`Found Cooper Flagg: player ID ${playerId}`);
 
-  const body = await res.json();
+  // Fetch season averages for current season
+  const currentSeason = new Date().getFullYear();
+  const body = await apiFetch(
+    `/season_averages?season=${currentSeason}&player_id=${playerId}`,
+    apiKey
+  );
 
   if (!body.data || body.data.length === 0) {
     console.error('No season data returned for Flagg.');
