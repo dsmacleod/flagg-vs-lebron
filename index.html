@@ -1,0 +1,100 @@
+<!--
+  Flagg vs LeBron Scoring Tracker
+  Paste this into a Newspack Custom HTML block.
+  Update DATA_URL to point to your hosted stats.json.
+-->
+<div id="flagg-vs-lebron" style="max-width:600px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1a1a1a;">
+  <div id="flagg-loading" style="text-align:center;padding:2rem;color:#666;">Loading…</div>
+</div>
+
+<style>
+  #flagg-vs-lebron * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  .flagg-headline {
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: 1rem;
+  }
+
+  .flagg-bar-wrap {
+    background: #e5e7eb;
+    border-radius: 6px;
+    height: 40px;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+  }
+
+  .flagg-bar-fill {
+    background: #1d4ed8;
+    height: 100%;
+    border-radius: 6px 0 0 6px;
+    min-width: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 6px;
+    transition: width 0.6s ease;
+  }
+
+  .flagg-bar-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #555;
+    margin-bottom: 1rem;
+  }
+
+  .flagg-subtext {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 0.75rem;
+  }
+
+  .flagg-footer {
+    font-size: 0.75rem;
+    color: #999;
+    border-top: 1px solid #e5e7eb;
+    padding-top: 0.5rem;
+  }
+</style>
+
+<script>
+(function() {
+  // UPDATE THIS URL to your hosted stats.json (e.g., GitHub Pages, S3, etc.)
+  var DATA_URL = 'data/stats.json';
+
+  var container = document.getElementById('flagg-vs-lebron');
+  var loading = document.getElementById('flagg-loading');
+
+  fetch(DATA_URL)
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var pct = Math.min(d.percentage, 100);
+      var barWidth = Math.max(pct, 0.5);
+
+      var projection = '';
+      if (d.projected_year && d.projected_age) {
+        projection = 'At his current pace of ' + d.ppg + ' PPG, Flagg will pass LeBron in <strong>' +
+          d.projected_year + '</strong> (age ' + d.projected_age + ').';
+      }
+
+      loading.remove();
+      container.innerHTML +=
+        '<div class="flagg-headline">Cooper Flagg is ' + pct + '% of the way to catching LeBron</div>' +
+        '<div class="flagg-bar-wrap">' +
+          '<div class="flagg-bar-fill" style="width:' + barWidth + '%"></div>' +
+        '</div>' +
+        '<div class="flagg-bar-labels">' +
+          '<span>Flagg: ' + d.points.toLocaleString() + ' pts</span>' +
+          '<span>LeBron: ' + d.lebron_total.toLocaleString() + ' pts</span>' +
+        '</div>' +
+        (projection ? '<div class="flagg-subtext">' + projection + '</div>' : '') +
+        '<div class="flagg-footer">Data: balldontlie.io | BDN</div>';
+    })
+    .catch(function() {
+      loading.textContent = 'Unable to load stats.';
+    });
+})();
+</script>
